@@ -35,3 +35,7 @@ require "autocmds"
 vim.schedule(function()
   require "mappings"
 end)
+
+require("cmp").config.formatting = {
+  format = require("tailwindcss-colorizer-cmp").formatter,
+}

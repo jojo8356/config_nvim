@@ -9,11 +9,6 @@ return {
     config = function()
       require "configs.lspconfig"
     end,
-    opts = {
-      servers = {
-        tailwindcss = {},
-      },
-    },
   },
 
   {
@@ -56,14 +51,6 @@ return {
     dependencies = {
       { "roobert/tailwindcss-colorizer-cmp.nvim", config = true },
     },
-    opts = function(_, opts)
-      -- original LazyVim kind icon formatter
-      local format_kinds = opts.formatting.format
-      opts.formatting.format = function(entry, item)
-        format_kinds(entry, item) -- add icons
-        return require("tailwindcss-colorizer-cmp").formatter(entry, item)
-      end
-    end,
   },
   {
     "williamboman/mason.nvim",
@@ -90,16 +77,6 @@ return {
           p:install()
         end
       end
-    end,
-  },
-  {
-    "themaxmarchuk/tailwindcss-colors.nvim",
-    -- load only on require("tailwindcss-colors")
-    module = "tailwindcss-colors",
-    -- run the setup function after plugin is loaded
-    config = function()
-      -- pass config options here (or nothing to use defaults)
-      require("tailwindcss-colors").setup()
     end,
   },
   { "princejoogie/tailwind-highlight.nvim" },
