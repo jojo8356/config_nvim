@@ -66,36 +66,6 @@ return {
     end,
   },
   {
-    "roobert/tailwindcss-colorizer-cmp.nvim",
-    -- optionally, override the default options:
-    config = function()
-      require("tailwindcss-colorizer-cmp").setup {
-        color_square_width = 2,
-      }
-    end,
-  },
-  {
-    "jose-elias-alvarez/null-ls.nvim",
-    config = function()
-      local null_ls = require "null-ls"
-      null_ls.setup {
-        sources = {
-          null_ls.builtins.formatting.prettier, -- Prettier
-        },
-        on_attach = function(client)
-          if client.supports_method "textDocument/formatting" then
-            vim.api.nvim_create_autocmd("BufWritePre", {
-              pattern = "*",
-              callback = function()
-                vim.lsp.buf.format { async = false }
-              end,
-            })
-          end
-        end,
-      }
-    end,
-  },
-  {
     "williamboman/mason.nvim",
     config = function()
       require("mason").setup()
@@ -122,4 +92,15 @@ return {
       end
     end,
   },
+  {
+    "themaxmarchuk/tailwindcss-colors.nvim",
+    -- load only on require("tailwindcss-colors")
+    module = "tailwindcss-colors",
+    -- run the setup function after plugin is loaded
+    config = function()
+      -- pass config options here (or nothing to use defaults)
+      require("tailwindcss-colors").setup()
+    end,
+  },
+  { "princejoogie/tailwind-highlight.nvim" },
 }

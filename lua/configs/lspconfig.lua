@@ -11,14 +11,23 @@ vim.schedule(function()
 
   -- ⚙️ CSS
   local css_cfg = vim.tbl_deep_extend("force", lspconfig.cssls, {
-    cmd = { "css-languageserver", "--stdio" },  -- 👈 ici on change la commande
+    cmd = { "css-languageserver", "--stdio" }, -- 👈 ici on change la commande
   })
   vim.lsp.start(css_cfg)
+
+  local tw_highlight = require "tailwind-highlight"
 
   local tw_cfg = vim.tbl_deep_extend("force", lspconfig.tailwindcss or {}, {
     cmd = { "tailwindcss-language-server", "--stdio" },
     filetypes = { "html", "css", "javascriptreact", "typescriptreact", "vue", "svelte" },
     root_dir = vim.fs.dirname(vim.fs.find({ "tailwind.config.js", ".git" }, { upward = true })[1]),
+    on_attach = function(client, bufnr)
+      tw_highlight.setup(client, bufnr, {
+        single_column = false,
+        mode = "background",
+        debounce = 200,
+      })
+    end,
   })
   vim.lsp.start(tw_cfg)
 
@@ -30,21 +39,21 @@ vim.schedule(function()
 end)
 
 vim.api.nvim_create_autocmd({ "FileType" }, {
-	  pattern = "css,eruby,html,htmldjango,javascriptreact,less,pug,sass,scss,typescriptreact",
-	  callback = function()
-	    vim.lsp.start({
-	      cmd = { "emmet-language-server", "--stdio" },
-	      root_dir = vim.fs.dirname(vim.fs.find({ ".git" }, { upward = true })[1]),
-	      init_options = {
-		-- Emmet configuration options go here
-	      },
-	    })
-	  end,
-	})
+  pattern = "css,eruby,html,htmldjango,javascriptreact,less,pug,sass,scss,typescriptreact",
+  callback = function()
+    vim.lsp.start {
+      cmd = { "emmet-language-server", "--stdio" },
+      root_dir = vim.fs.dirname(vim.fs.find({ ".git" }, { upward = true })[1]),
+      init_options = {
+        -- Emmet configuration options go here
+      },
+    }
+  end,
+})
 
-require('substitute').setup()
+require("substitute").setup()
 require("cmp").config.formatting = {
-  format = require("tailwindcss-colorizer-cmp").formatter
+  format = require("tailwindcss-colorizer-cmp").formatter,
 }
 
 vim.api.nvim_create_autocmd("BufWritePre", {
