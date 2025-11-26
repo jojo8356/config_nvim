@@ -46,3 +46,9 @@ require('substitute').setup()
 require("cmp").config.formatting = {
   format = require("tailwindcss-colorizer-cmp").formatter
 }
+
+vim.api.nvim_create_autocmd("BufWritePre", {
+  callback = function()
+    require("conform").format()
+  end,
+})
