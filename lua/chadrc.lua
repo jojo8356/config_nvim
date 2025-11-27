@@ -6,6 +6,7 @@ vim.opt.number = true
 vim.opt.relativenumber = true
 vim.opt.autoindent = true
 vim.opt.smartindent = true
+vim.o.sessionoptions = "blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions"
 
 ---@type ChadrcConfig
 local M = {}

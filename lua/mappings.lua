@@ -73,3 +73,42 @@ vim.keymap.set("n", "<leader>rn", function()
     vim.lsp.buf.rename()
   end
 end)
+
+vim.api.nvim_set_keymap("n", "<leader>n", ":e ~/.config/nvim/notes.md<CR>", { noremap = true, silent = true })
+
+_G.no_clipboard = false
+
+-- toggle fonction
+function ToggleNoClipboard()
+  _G.no_clipboard = not _G.no_clipboard
+  if _G.no_clipboard then
+    print "Mode: supprimer sans mémoire activé"
+  else
+    print "Mode: suppression normale activée"
+  end
+end
+
+-- mapping Ctrl+m pour toggle
+vim.api.nvim_set_keymap("n", "<C-m>", ":lua ToggleNoClipboard()<CR>", opts)
+
+-- redéfinir d et x pour utiliser registre noir si toggle actif
+vim.keymap.set({ "n", "x" }, "d", function()
+  if _G.no_clipboard then
+    return [["_d]]
+  else
+    return "d"
+  end
+end, { expr = true, noremap = true })
+
+vim.keymap.set({ "n", "x" }, "x", function()
+  if _G.no_clipboard then
+    return [["_x]]
+  else
+    return "x"
+  end
+end, { expr = true, noremap = true })
+
+vim.api.nvim_set_keymap("n", "MP", "dith<C-v>", { noremap = true, silent = true })
+
+vim.keymap.set("n", "<leader>d", "<Plug>(nvim-surround-delete)", { desc = "Delete surrounding tag" })
+vim.keymap.set("n", "<leader>ia", ":TSLspImportAll<CR>", { desc = "Import missing all" })

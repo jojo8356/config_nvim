@@ -22,6 +22,24 @@ vim.schedule(function()
   })
   vim.lsp.start(tw_cfg)
 
+  vim.lsp.config.ts_ls = {
+    cmd = { "typescript-language-server", "--stdio" },
+    filetypes = { "typescript", "typescriptreact", "javascript", "javascriptreact", "typescript.tsx" },
+    root_markers = { "tsconfig.json", "jsconfig.json", ".git" },
+    settings = {
+      typescript = {
+        -- tes settings TS si besoin
+      },
+      javascript = {
+        -- tes settings JS si besoin
+      },
+    },
+    -- on_attach : à gérer via autocmd LspAttach ou globalement
+  }
+
+  -- activer le serveur
+  vim.lsp.enable "ts_ls"
+
   -- ⚙️ Dart
   local dart_cfg = lspconfig.dartls
   if dart_cfg then
