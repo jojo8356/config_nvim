@@ -79,5 +79,11 @@ return {
       end
     end,
   },
-  { "princejoogie/tailwind-highlight.nvim" },
+  {
+    "fedepujol/move.nvim",
+    opts = {
+      --- Config
+    },
+  },
+  { "tronikelis/ts-autotag.nvim" },
 }
