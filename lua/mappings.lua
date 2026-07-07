@@ -2,7 +2,13 @@ require "nvchad.mappings"
 
 -- add yours here
 
+vim.api.nvim_create_user_command("Reload", function()
+  vim.cmd("source " .. vim.fn.stdpath "config" .. "/lua/mappings.lua")
+  print "Mappings rechargés"
+end, { desc = "Reload mappings.lua" })
+
 local map = vim.keymap.set
+local maven = require "configs.maven"
 
 map("n", ";", ":", { desc = "CMD enter command mode" })
 
@@ -36,12 +42,45 @@ local function is_react_project()
 end
 
 map("n", "<F5>", function()
+  local ft = vim.bo.filetype
+  if ft == "java" then
+    local ok, dap = pcall(require, "dap")
+    if ok then
+      dap.continue()
+      return
+    end
+
+    if maven.is_maven_project(0) then
+      maven.exec_main()
+      return
+    end
+
+    local file = vim.fn.expand "%:p"
+    vim.cmd(
+      "tabnew | term javac "
+        .. vim.fn.shellescape(file)
+        .. " && java -cp "
+        .. vim.fn.shellescape(vim.fn.expand "%:p:h")
+        .. " "
+        .. vim.fn.shellescape(vim.fn.expand "%:t:r")
+    )
+    return
+  end
+  if ft == "python" then
+    if package.loaded["dap"] then
+      require("dap").continue()
+    else
+      local file = vim.fn.expand "%:p"
+      vim.cmd("tabnew | term python3 " .. file)
+    end
+    return
+  end
   if is_react_project() then
     vim.cmd "tabnew | term pnpm run dev"
     return
   end
-  print "❌ Pas un projet React"
-end, { desc = "Launch pnpm dev (React only)" })
+  print "Pas un projet supporté"
+end, { desc = "Run project (Java/Python/React)" })
 
 -- Exchange
 map("n", "sx", require("substitute.exchange").operator)
@@ -93,19 +132,15 @@ vim.api.nvim_set_keymap("n", "<C-m>", ":lua ToggleNoClipboard()<CR>", opts)
 
 -- redéfinir d et x pour utiliser registre noir si toggle actif
 vim.keymap.set({ "n", "x" }, "d", function()
-  if _G.no_clipboard then
-    return [["_d]]
-  else
-    return "d"
-  end
+  return _G.no_clipboard and [["_d]] or "d"
+end, { expr = true, noremap = true })
+
+vim.keymap.set("n", "dd", function()
+  return _G.no_clipboard and [["_dd]] or "dd"
 end, { expr = true, noremap = true })
 
 vim.keymap.set({ "n", "x" }, "x", function()
-  if _G.no_clipboard then
-    return [["_x]]
-  else
-    return "x"
-  end
+  return _G.no_clipboard and [["_x]] or "x"
 end, { expr = true, noremap = true })
 
 vim.api.nvim_set_keymap("n", "MP", "dith<C-v>", { noremap = true, silent = true })

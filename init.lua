@@ -1,6 +1,10 @@
 vim.g.base46_cache = vim.fn.stdpath "data" .. "/base46/"
 vim.g.mapleader = " "
 
+local luarocks_home = vim.fn.expand "~/.luarocks"
+package.path = luarocks_home .. "/share/lua/5.1/?.lua;" .. luarocks_home .. "/share/lua/5.1/?/init.lua;" .. package.path
+package.cpath = luarocks_home .. "/lib/lua/5.1/?.so;" .. package.cpath
+
 -- bootstrap lazy and all plugins
 local lazypath = vim.fn.stdpath "data" .. "/lazy/lazy.nvim"
 
