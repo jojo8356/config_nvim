@@ -13,6 +13,7 @@ local maven = require "configs.maven"
 map("n", ";", ":", { desc = "CMD enter command mode" })
 
 map("i", "jk", "<ESC>")
+map("n", "<leader>a", "ggVG", { desc = "Select all content" })
 
 local opts = { noremap = true, silent = true }
 vim.api.nvim_set_keymap("n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>", opts)
@@ -114,6 +115,10 @@ vim.keymap.set("n", "<leader>rn", function()
 end)
 
 vim.api.nvim_set_keymap("n", "<leader>n", ":e ~/.config/nvim/notes.md<CR>", { noremap = true, silent = true })
+
+vim.keymap.set("n", "<leader>qs", "<cmd>AutoSession save<CR>", { desc = "Session save" })
+vim.keymap.set("n", "<leader>qr", "<cmd>AutoSession restore<CR>", { desc = "Session restore" })
+vim.keymap.set("n", "<leader>qf", "<cmd>AutoSession search<CR>", { desc = "Session search" })
 
 _G.no_clipboard = false
 

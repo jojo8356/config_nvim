@@ -1,6 +1,18 @@
-require("nvchad.configs.lspconfig").defaults()
+-- NvChad v2.5 récent utilise les nouvelles APIs `vim.lsp.config/enable`
+-- disponibles à partir de Neovim 0.11. Cette machine est en 0.10.4, donc on
+-- garde un fallback compatible 0.10 via `lspconfig[server].setup` plus bas.
+if vim.lsp.config and vim.lsp.enable then
+  require("nvchad.configs.lspconfig").defaults()
+end
 
 local mason_bin = vim.fn.stdpath "data" .. "/mason/bin"
+local lspconfig = require "lspconfig"
+local util = require "lspconfig.util"
+local capabilities = vim.lsp.protocol.make_client_capabilities()
+local ok_cmp, cmp_nvim_lsp = pcall(require, "cmp_nvim_lsp")
+if ok_cmp then
+  capabilities = cmp_nvim_lsp.default_capabilities(capabilities)
+end
 
 local function exe(name)
   return mason_bin .. "/" .. name
@@ -15,48 +27,84 @@ local python_root_markers = {
   ".git",
 }
 
-local function python_root_dir(bufnr, on_dir)
-  on_dir(vim.fs.root(bufnr, python_root_markers) or vim.fn.getcwd())
+local function python_root_dir(fname)
+  return util.root_pattern(unpack(python_root_markers))(fname) or vim.fn.getcwd()
+end
+
+local function root_pattern(...)
+  return util.root_pattern(...)
+end
+
+local function setup_server(name, opts)
+  if lspconfig[name] then
+    opts.capabilities = vim.tbl_deep_extend("force", capabilities, opts.capabilities or {})
+    lspconfig[name].setup(opts)
+  end
 end
 
 local function setup_lsp()
   -- PHP
-  vim.lsp.config("phpactor", {
+  setup_server("phpactor", {
     cmd = { exe "phpactor", "language-server" },
     filetypes = { "php" },
-    root_markers = { "composer.json", ".phpactor.json", ".phpactor.yml", ".git" },
+    root_dir = root_pattern("composer.json", ".phpactor.json", ".phpactor.yml", ".git"),
   })
-  vim.lsp.enable "phpactor"
+
+  -- Intelephense est excellent pour l'indexation/autocomplétion de gros projets.
+  -- Phpactor reste activé pour ses refactorings/code actions open-source.
+  if vim.fn.executable(exe "intelephense") == 1 then
+    setup_server("intelephense", {
+      cmd = { exe "intelephense", "--stdio" },
+      filetypes = { "php" },
+      root_dir = root_pattern("composer.json", ".git"),
+      init_options = {
+        licenceKey = vim.env.INTELEPHENSE_LICENSE_KEY,
+      },
+      settings = {
+        intelephense = {
+          files = {
+            maxSize = 5000000,
+            associations = { "*.php", "*.phtml", "*.blade.php" },
+          },
+          environment = {
+            includePaths = { "vendor" },
+          },
+          completion = {
+            fullyQualifyGlobalConstantsAndFunctions = false,
+          },
+          diagnostics = {
+            enable = true,
+          },
+        },
+      },
+    })
+  end
 
   -- Web
-  vim.lsp.config("html", {
+  setup_server("html", {
     cmd = { "/home/jojokes/.local/share/pnpm/vscode-html-language-server", "--stdio" },
     filetypes = { "html", "templ", "htmldjango" },
   })
-  vim.lsp.enable "html"
 
-  vim.lsp.config("cssls", {
+  setup_server("cssls", {
     cmd = { "/home/jojokes/.local/share/pnpm/vscode-css-language-server", "--stdio" },
     filetypes = { "css", "scss", "less" },
   })
-  vim.lsp.enable "cssls"
 
-  vim.lsp.config("tailwindcss", {
+  setup_server("tailwindcss", {
     cmd = { "tailwindcss-language-server", "--stdio" },
-    filetypes = { "html", "css", "javascriptreact", "typescriptreact", "vue", "svelte" },
-    root_markers = { "tailwind.config.js", "tailwind.config.ts", "postcss.config.js", ".git" },
+    filetypes = { "html", "css", "javascriptreact", "typescriptreact", "vue", "svelte", "php", "blade" },
+    root_dir = root_pattern("tailwind.config.js", "tailwind.config.ts", "postcss.config.js", ".git"),
   })
-  vim.lsp.enable "tailwindcss"
 
-  vim.lsp.config("ts_ls", {
+  setup_server("ts_ls", {
     cmd = { "typescript-language-server", "--stdio" },
     filetypes = { "typescript", "typescriptreact", "javascript", "javascriptreact", "typescript.tsx" },
-    root_markers = { "tsconfig.json", "jsconfig.json", "package.json", ".git" },
+    root_dir = root_pattern("tsconfig.json", "jsconfig.json", "package.json", ".git"),
   })
-  vim.lsp.enable "ts_ls"
 
   -- Python
-  vim.lsp.config("basedpyright", {
+  setup_server("basedpyright", {
     cmd = { exe "basedpyright-langserver", "--stdio" },
     filetypes = { "python" },
     root_dir = python_root_dir,
@@ -72,9 +120,8 @@ local function setup_lsp()
       },
     },
   })
-  vim.lsp.enable "basedpyright"
 
-  vim.lsp.config("ruff", {
+  setup_server("ruff", {
     cmd = { exe "ruff", "server" },
     filetypes = { "python" },
     root_dir = python_root_dir,
@@ -88,23 +135,20 @@ local function setup_lsp()
       client.server_capabilities.documentRangeFormattingProvider = false
     end,
   })
-  vim.lsp.enable "ruff"
 
   -- SQL
-  vim.lsp.config("sqls", {
+  setup_server("sqls", {
     cmd = { exe "sqls" },
     filetypes = { "sql", "mysql", "plpgsql" },
-    root_markers = { ".git" },
+    root_dir = root_pattern(".git"),
   })
-  vim.lsp.enable "sqls"
 
   -- Dart
-  vim.lsp.config("dartls", {
+  setup_server("dartls", {
     cmd = { "/home/jojokes/Applications/flutter/bin/dart", "language-server", "--protocol=lsp" },
     filetypes = { "dart" },
-    root_markers = { "pubspec.yaml", ".git" },
+    root_dir = root_pattern("pubspec.yaml", ".git"),
   })
-  vim.lsp.enable "dartls"
 end
 
 setup_lsp()

@@ -24,7 +24,7 @@ return {
     event = { "BufReadPost", "BufNewFile" },
     config = function()
       require("nvim-treesitter.configs").setup {
-        ensure_installed = { "dart", "html", "java", "php", "phpdoc", "python", "sql" },
+        ensure_installed = { "dart", "html", "java", "php", "phpdoc", "python", "sql", "yaml", "json" },
         highlight = { enable = true },
         textobjects = {
           select = {
@@ -44,8 +44,14 @@ return {
     lazy = false,
 
     opts = {
+      auto_save = true,
+      auto_restore = true,
+      auto_restore_last_session = true,
+      cwd_change_handling = true,
+      args_allow_files_auto_save = true,
       suppressed_dirs = { "~/", "~/Projects", "~/Downloads", "/" },
-      -- log_level = 'debug',
+      save_extra_data = require("configs.session").save_extra_data,
+      restore_extra_data = require("configs.session").restore_extra_data,
     },
   },
   {
@@ -67,6 +73,12 @@ return {
     dependencies = {
       { "roobert/tailwindcss-colorizer-cmp.nvim", config = true },
     },
+  },
+  {
+    -- Dernière version compatible avec Neovim 0.10.x.
+    -- Les versions plus récentes de Telescope exigent Neovim 0.11+.
+    "nvim-telescope/telescope.nvim",
+    commit = "7dbbcfdd4d1622ee7152b9b18cafbddd712a1fd1",
   },
   {
     "williamboman/mason.nvim",
@@ -94,15 +106,19 @@ return {
         "debugpy",
         "sqls",
         "sql-formatter",
+        "composer",
         "phpactor",
+        "intelephense",
         "php-cs-fixer",
         "phpstan",
+        "phpcs",
+        "php-debug-adapter",
       }
 
       local mr = require "mason-registry"
       for _, pkg in ipairs(ensure_installed) do
-        local p = mr.get_package(pkg)
-        if not p:is_installed() then
+        local ok, p = pcall(mr.get_package, pkg)
+        if ok and not p:is_installed() then
           p:install()
         end
       end
@@ -174,16 +190,34 @@ return {
       "nvim-lua/plenary.nvim",
       "nvim-treesitter/nvim-treesitter",
       "nvim-neotest/neotest-python",
+      "olimorris/neotest-phpunit",
     },
     config = function()
-      require("neotest").setup {
-        adapters = {
-          require "neotest-python" {
-            dap = { justMyCode = false },
-            runner = "pytest",
-            python = ".venv/bin/python",
-          },
+      local adapters = {
+        require "neotest-python" {
+          dap = { justMyCode = false },
+          runner = "pytest",
+          python = ".venv/bin/python",
         },
+      }
+
+      local ok_phpunit, phpunit = pcall(require, "neotest-phpunit")
+      if ok_phpunit then
+        table.insert(adapters, phpunit {
+          phpunit_cmd = function()
+            if vim.fn.filereadable "vendor/bin/pest" == 1 then
+              return "vendor/bin/pest"
+            end
+            if vim.fn.filereadable "vendor/bin/phpunit" == 1 then
+              return "vendor/bin/phpunit"
+            end
+            return "phpunit"
+          end,
+        })
+      end
+
+      require("neotest").setup {
+        adapters = adapters,
       }
     end,
   },
@@ -254,23 +288,4 @@ return {
     end,
   },
 
-  -- Helix-style select-first editing
-  {
-    "kak.nvim",
-    url = "https://codeberg.org/mirge/kak.nvim.git",
-    event = "VeryLazy",
-    opts = {},
-    config = function(_, opts)
-      require("kak").setup(opts)
-
-      vim.keymap.set("n", "G", function()
-        local count = vim.v.count
-        if count > 0 then
-          vim.cmd("normal! " .. count .. "G")
-        else
-          vim.cmd "normal! G"
-        end
-      end, { desc = "Go to line or end of file" })
-    end,
-  },
 }
