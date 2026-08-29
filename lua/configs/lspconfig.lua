@@ -1,20 +1,18 @@
--- NvChad v2.5 récent utilise les nouvelles APIs `vim.lsp.config/enable`
--- disponibles à partir de Neovim 0.11. Cette machine est en 0.10.4, donc on
--- garde un fallback compatible 0.10 via `lspconfig[server].setup` plus bas.
-if vim.lsp.config and vim.lsp.enable then
-  require("nvchad.configs.lspconfig").defaults()
-end
+-- ~/.config/nvim/lua/configs/lspconfig.lua
+-- Configuration pour NvChad et Neovim 0.12+
+
+require("nvchad.configs.lspconfig").defaults()
 
 local mason_bin = vim.fn.stdpath "data" .. "/mason/bin"
-local lspconfig = require "lspconfig"
-local util = require "lspconfig.util"
+
 local capabilities = vim.lsp.protocol.make_client_capabilities()
-local ok_cmp, cmp_nvim_lsp = pcall(require, "cmp_nvim_lsp")
-if ok_cmp then
+local has_cmp, cmp_nvim_lsp = pcall(require, "cmp_nvim_lsp")
+
+if has_cmp then
   capabilities = cmp_nvim_lsp.default_capabilities(capabilities)
 end
 
-local function exe(name)
+local function mason_executable(name)
   return mason_bin .. "/" .. name
 end
 
@@ -27,36 +25,42 @@ local python_root_markers = {
   ".git",
 }
 
-local function python_root_dir(fname)
-  return util.root_pattern(unpack(python_root_markers))(fname) or vim.fn.getcwd()
+-- La nouvelle API root_dir reçoit le numéro du buffer et une callback.
+local function python_root_dir(bufnr, on_dir)
+  local root = vim.fs.root(bufnr, python_root_markers) or vim.fn.getcwd()
+  on_dir(root)
 end
 
-local function root_pattern(...)
-  return util.root_pattern(...)
-end
+local function setup_server(name, options)
+  options = options or {}
+  options.capabilities = vim.tbl_deep_extend("force", {}, capabilities, options.capabilities or {})
 
-local function setup_server(name, opts)
-  if lspconfig[name] then
-    opts.capabilities = vim.tbl_deep_extend("force", capabilities, opts.capabilities or {})
-    lspconfig[name].setup(opts)
-  end
+  vim.lsp.config(name, options)
+  vim.lsp.enable(name)
 end
 
 local function setup_lsp()
-  -- PHP
+  -- PHP : refactorings et actions de code.
   setup_server("phpactor", {
-    cmd = { exe "phpactor", "language-server" },
+    cmd = { mason_executable "phpactor", "language-server" },
     filetypes = { "php" },
-    root_dir = root_pattern("composer.json", ".phpactor.json", ".phpactor.yml", ".git"),
+    root_markers = {
+      "composer.json",
+      ".phpactor.json",
+      ".phpactor.yml",
+      ".git",
+    },
   })
 
-  -- Intelephense est excellent pour l'indexation/autocomplétion de gros projets.
-  -- Phpactor reste activé pour ses refactorings/code actions open-source.
-  if vim.fn.executable(exe "intelephense") == 1 then
+  -- PHP : indexation et autocomplétion.
+  if vim.fn.executable(mason_executable "intelephense") == 1 then
     setup_server("intelephense", {
-      cmd = { exe "intelephense", "--stdio" },
+      cmd = { mason_executable "intelephense", "--stdio" },
       filetypes = { "php" },
-      root_dir = root_pattern("composer.json", ".git"),
+      root_markers = {
+        "composer.json",
+        ".git",
+      },
       init_options = {
         licenceKey = vim.env.INTELEPHENSE_LICENSE_KEY,
       },
@@ -64,7 +68,11 @@ local function setup_lsp()
         intelephense = {
           files = {
             maxSize = 5000000,
-            associations = { "*.php", "*.phtml", "*.blade.php" },
+            associations = {
+              "*.php",
+              "*.phtml",
+              "*.blade.php",
+            },
           },
           environment = {
             includePaths = { "vendor" },
@@ -80,32 +88,83 @@ local function setup_lsp()
     })
   end
 
-  -- Web
+  -- HTML.
   setup_server("html", {
-    cmd = { "/home/jojokes/.local/share/pnpm/vscode-html-language-server", "--stdio" },
-    filetypes = { "html", "templ", "htmldjango" },
+    cmd = {
+      "/home/jojokes/.local/share/pnpm/vscode-html-language-server",
+      "--stdio",
+    },
+    filetypes = {
+      "html",
+      "templ",
+      "htmldjango",
+    },
   })
 
+  -- CSS.
   setup_server("cssls", {
-    cmd = { "/home/jojokes/.local/share/pnpm/vscode-css-language-server", "--stdio" },
-    filetypes = { "css", "scss", "less" },
+    cmd = {
+      "/home/jojokes/.local/share/pnpm/vscode-css-language-server",
+      "--stdio",
+    },
+    filetypes = {
+      "css",
+      "scss",
+      "less",
+    },
   })
 
+  -- Tailwind CSS.
   setup_server("tailwindcss", {
-    cmd = { "tailwindcss-language-server", "--stdio" },
-    filetypes = { "html", "css", "javascriptreact", "typescriptreact", "vue", "svelte", "php", "blade" },
-    root_dir = root_pattern("tailwind.config.js", "tailwind.config.ts", "postcss.config.js", ".git"),
+    cmd = {
+      "tailwindcss-language-server",
+      "--stdio",
+    },
+    filetypes = {
+      "html",
+      "css",
+      "javascriptreact",
+      "typescriptreact",
+      "vue",
+      "svelte",
+      "php",
+      "blade",
+    },
+    root_markers = {
+      "tailwind.config.js",
+      "tailwind.config.ts",
+      "postcss.config.js",
+      ".git",
+    },
   })
 
+  -- JavaScript et TypeScript.
   setup_server("ts_ls", {
-    cmd = { "typescript-language-server", "--stdio" },
-    filetypes = { "typescript", "typescriptreact", "javascript", "javascriptreact", "typescript.tsx" },
-    root_dir = root_pattern("tsconfig.json", "jsconfig.json", "package.json", ".git"),
+    cmd = {
+      "typescript-language-server",
+      "--stdio",
+    },
+    filetypes = {
+      "typescript",
+      "typescriptreact",
+      "javascript",
+      "javascriptreact",
+      "typescript.tsx",
+    },
+    root_markers = {
+      "tsconfig.json",
+      "jsconfig.json",
+      "package.json",
+      ".git",
+    },
   })
 
-  -- Python
+  -- Python : analyse statique et autocomplétion.
   setup_server("basedpyright", {
-    cmd = { exe "basedpyright-langserver", "--stdio" },
+    cmd = {
+      mason_executable "basedpyright-langserver",
+      "--stdio",
+    },
     filetypes = { "python" },
     root_dir = python_root_dir,
     settings = {
@@ -121,13 +180,19 @@ local function setup_lsp()
     },
   })
 
+  -- Python : lint avec Ruff.
   setup_server("ruff", {
-    cmd = { exe "ruff", "server" },
+    cmd = {
+      mason_executable "ruff",
+      "server",
+    },
     filetypes = { "python" },
     root_dir = python_root_dir,
     settings = {
       ruff = {
-        lint = { enable = true },
+        lint = {
+          enable = true,
+        },
       },
     },
     on_attach = function(client)
@@ -136,57 +201,74 @@ local function setup_lsp()
     end,
   })
 
-  -- SQL
+  -- SQL.
   setup_server("sqls", {
-    cmd = { exe "sqls" },
-    filetypes = { "sql", "mysql", "plpgsql" },
-    root_dir = root_pattern(".git"),
+    cmd = { mason_executable "sqls" },
+    filetypes = {
+      "sql",
+      "mysql",
+      "plpgsql",
+    },
+    root_markers = { ".git" },
   })
 
-  -- Dart
+  -- Dart et Flutter.
   setup_server("dartls", {
-    cmd = { "/home/jojokes/Applications/flutter/bin/dart", "language-server", "--protocol=lsp" },
+    cmd = {
+      "/home/jojokes/Applications/flutter/bin/dart",
+      "language-server",
+      "--protocol=lsp",
+    },
     filetypes = { "dart" },
-    root_dir = root_pattern("pubspec.yaml", ".git"),
+    root_markers = {
+      "pubspec.yaml",
+      ".git",
+    },
   })
+
+  -- Emmet.
+  if vim.fn.executable "emmet-language-server" == 1 then
+    setup_server("emmet_language_server", {
+      cmd = {
+        "emmet-language-server",
+        "--stdio",
+      },
+      filetypes = {
+        "css",
+        "eruby",
+        "html",
+        "htmldjango",
+        "javascriptreact",
+        "less",
+        "pug",
+        "sass",
+        "scss",
+        "typescriptreact",
+      },
+      root_markers = {
+        "package.json",
+        ".git",
+      },
+      workspace_required = false,
+    })
+  end
 end
 
 setup_lsp()
 
-vim.api.nvim_create_autocmd("FileType", {
-  pattern = {
-    "css",
-    "eruby",
-    "html",
-    "htmldjango",
-    "javascriptreact",
-    "less",
-    "pug",
-    "sass",
-    "scss",
-    "typescriptreact",
-  },
-  callback = function()
-    if vim.fn.executable "emmet-language-server" ~= 1 then
-      return
-    end
+-- Substitute.
+require("substitute").setup()
 
-    vim.lsp.start {
-      name = "emmet-language-server",
-      cmd = { "emmet-language-server", "--stdio" },
-      root_dir = vim.fs.root(0, { ".git", "package.json" }) or vim.fn.getcwd(),
+-- Formatage automatique avant l'enregistrement.
+vim.api.nvim_create_autocmd("BufWritePre", {
+  callback = function(args)
+    require("conform").format {
+      bufnr = args.buf,
     }
   end,
 })
 
-require("substitute").setup()
-
-vim.api.nvim_create_autocmd("BufWritePre", {
-  callback = function(args)
-    require("conform").format { bufnr = args.buf }
-  end,
-})
-
+-- Déplacement de lignes, blocs et mots.
 require("move").setup {
   line = {
     enable = true,
@@ -204,6 +286,7 @@ require("move").setup {
   },
 }
 
+-- Fermeture automatique des balises.
 require("ts-autotag").setup {
   opening_node_types = {
     "tag_start",

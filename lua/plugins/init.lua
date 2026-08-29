@@ -20,16 +20,33 @@ return {
   },
   {
     "nvim-treesitter/nvim-treesitter",
+    lazy = false,
     build = ":TSUpdate",
-    event = { "BufReadPost", "BufNewFile" },
+
     config = function()
       require("nvim-treesitter.configs").setup {
-        ensure_installed = { "dart", "html", "java", "php", "phpdoc", "python", "sql", "yaml", "json" },
-        highlight = { enable = true },
+        ensure_installed = {
+          "lua",
+          "dart",
+          "html",
+          "java",
+          "php",
+          "phpdoc",
+          "python",
+          "sql",
+          "yaml",
+          "json",
+        },
+
+        highlight = {
+          enable = true,
+        },
+
         textobjects = {
           select = {
             enable = true,
             lookahead = true,
+
             keymaps = {
               ["a t"] = "@tag.outer",
               ["i t"] = "@tag.inner",
@@ -38,6 +55,121 @@ return {
         },
       }
     end,
+  },
+  {
+    "kevinhwang91/nvim-ufo",
+
+    main = "ufo",
+    lazy = false,
+    priority = 1000,
+
+    dependencies = {
+      "kevinhwang91/promise-async",
+    },
+
+    init = function()
+      vim.opt.foldcolumn = "1"
+      vim.opt.foldlevel = 99
+      vim.opt.foldlevelstart = 99
+      vim.opt.foldenable = true
+    end,
+
+    opts = function()
+      local function fold_text_handler(virtual_text, start_line, end_line, width, truncate)
+        local result = {}
+
+        local line_count = end_line - start_line + 1
+
+        local label = line_count == 1 and "ligne" or "lignes"
+
+        local suffix = string.format(" %d %s --}", line_count, label)
+
+        local suffix_width = vim.fn.strdisplaywidth(suffix)
+
+        local available_width = math.max(0, width - suffix_width)
+
+        local current_width = 0
+
+        for _, chunk in ipairs(virtual_text) do
+          local text = chunk[1]
+          local highlight = chunk[2]
+
+          local chunk_width = vim.fn.strdisplaywidth(text)
+
+          if current_width + chunk_width <= available_width then
+            table.insert(result, chunk)
+
+            current_width = current_width + chunk_width
+          else
+            local remaining = available_width - current_width
+
+            if remaining > 0 then
+              local truncated_text = truncate(text, remaining)
+
+              table.insert(result, {
+                truncated_text,
+                highlight,
+              })
+
+              current_width = current_width + vim.fn.strdisplaywidth(truncated_text)
+            end
+
+            break
+          end
+        end
+
+        local padding = math.max(0, available_width - current_width)
+
+        if padding > 0 then
+          table.insert(result, {
+            string.rep("-", padding),
+            "Comment",
+          })
+        end
+
+        table.insert(result, {
+          suffix,
+          "Comment",
+        })
+
+        return result
+      end
+
+      return {
+        override_foldtext = true,
+
+        provider_selector = function()
+          return {
+            "treesitter",
+            "indent",
+          }
+        end,
+
+        fold_virt_text_handler = fold_text_handler,
+      }
+    end,
+
+    keys = {
+      {
+        "zR",
+        function()
+          require("ufo").openAllFolds()
+        end,
+        desc = "Ouvrir tous les plis",
+      },
+      {
+        "zM",
+        function()
+          require("ufo").closeAllFolds()
+        end,
+        desc = "Fermer tous les plis",
+      },
+      {
+        "<leader>z",
+        "za",
+        desc = "Ouvrir/fermer le pli",
+      },
+    },
   },
   {
     "rmagatti/auto-session",
@@ -203,17 +335,20 @@ return {
 
       local ok_phpunit, phpunit = pcall(require, "neotest-phpunit")
       if ok_phpunit then
-        table.insert(adapters, phpunit {
-          phpunit_cmd = function()
-            if vim.fn.filereadable "vendor/bin/pest" == 1 then
-              return "vendor/bin/pest"
-            end
-            if vim.fn.filereadable "vendor/bin/phpunit" == 1 then
-              return "vendor/bin/phpunit"
-            end
-            return "phpunit"
-          end,
-        })
+        table.insert(
+          adapters,
+          phpunit {
+            phpunit_cmd = function()
+              if vim.fn.filereadable "vendor/bin/pest" == 1 then
+                return "vendor/bin/pest"
+              end
+              if vim.fn.filereadable "vendor/bin/phpunit" == 1 then
+                return "vendor/bin/phpunit"
+              end
+              return "phpunit"
+            end,
+          }
+        )
       end
 
       require("neotest").setup {
@@ -287,5 +422,4 @@ return {
       vim.g.db_ui_execute_on_save = false
     end,
   },
-
 }
