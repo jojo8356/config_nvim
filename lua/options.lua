@@ -25,9 +25,6 @@ local diagnostic_signs = {
   [vim.diagnostic.severity.HINT] = "H",
 }
 
-vim.api.nvim_set_hl(0, "DiagnosticLineError", { bg = "#3a1f1f" })
-vim.api.nvim_set_hl(0, "DiagnosticLineWarn", { bg = "#332b18" })
-
 vim.diagnostic.config {
   underline = true,
   update_in_insert = false,
