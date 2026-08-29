@@ -1,4 +1,14 @@
 return {
+  -- Guides d'indentation (indent-blankline) : désactivés.
+  -- Les barres verticales à gauche, étagées selon l'indentation, sont retirées.
+  -- (Selon la police du terminal elles s'affichaient comme des carrés rouges.)
+  {
+    "lukas-reineke/indent-blankline.nvim",
+    opts = {
+      enabled = false,
+    },
+  },
+
   {
     "stevearc/conform.nvim",
     opts = require "configs.conform",
