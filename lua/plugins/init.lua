@@ -74,80 +74,8 @@ return {
       vim.opt.foldenable = true
     end,
 
-    opts = function()
-      local function fold_text_handler(virtual_text, start_line, end_line, width, truncate)
-        local result = {}
-
-        local line_count = end_line - start_line + 1
-
-        local label = line_count == 1 and "ligne" or "lignes"
-
-        local suffix = string.format(" %d %s --}", line_count, label)
-
-        local suffix_width = vim.fn.strdisplaywidth(suffix)
-
-        local available_width = math.max(0, width - suffix_width)
-
-        local current_width = 0
-
-        for _, chunk in ipairs(virtual_text) do
-          local text = chunk[1]
-          local highlight = chunk[2]
-
-          local chunk_width = vim.fn.strdisplaywidth(text)
-
-          if current_width + chunk_width <= available_width then
-            table.insert(result, chunk)
-
-            current_width = current_width + chunk_width
-          else
-            local remaining = available_width - current_width
-
-            if remaining > 0 then
-              local truncated_text = truncate(text, remaining)
-
-              table.insert(result, {
-                truncated_text,
-                highlight,
-              })
-
-              current_width = current_width + vim.fn.strdisplaywidth(truncated_text)
-            end
-
-            break
-          end
-        end
-
-        local padding = math.max(0, available_width - current_width)
-
-        if padding > 0 then
-          table.insert(result, {
-            string.rep("-", padding),
-            "Comment",
-          })
-        end
-
-        table.insert(result, {
-          suffix,
-          "Comment",
-        })
-
-        return result
-      end
-
-      return {
-        override_foldtext = true,
-
-        provider_selector = function()
-          return {
-            "treesitter",
-            "indent",
-          }
-        end,
-
-        fold_virt_text_handler = fold_text_handler,
-      }
-    end,
+    -- toute la logique de rendu est dans lua/configs/ufo.lua
+    opts = require "configs.ufo",
 
     keys = {
       {
