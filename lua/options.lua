@@ -43,14 +43,15 @@ vim.diagnostic.config {
     border = "rounded",
     source = "always",
   },
-  -- Pas de numhl : sans ça, les numéros de ligne (à gauche) passent en rouge/jaune
-  -- sur chaque ligne portant une erreur/warning du LSP, ce qui ressemble à des
-  -- "niveaux d'indentation" rouges.
   signs = {
     text = diagnostic_signs,
     linehl = {
       [vim.diagnostic.severity.ERROR] = "DiagnosticLineError",
       [vim.diagnostic.severity.WARN] = "DiagnosticLineWarn",
+    },
+    numhl = {
+      [vim.diagnostic.severity.ERROR] = "DiagnosticSignError",
+      [vim.diagnostic.severity.WARN] = "DiagnosticSignWarn",
     },
   },
 }
