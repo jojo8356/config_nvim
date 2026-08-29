@@ -132,8 +132,11 @@ function ToggleNoClipboard()
   end
 end
 
--- mapping Ctrl+m pour toggle
-vim.api.nvim_set_keymap("n", "<C-m>", ":lua ToggleNoClipboard()<CR>", opts)
+-- FIX: l'ancien raccourci était <C-m>, or <C-m> == touche Entrée (CR) en terminal,
+-- donc chaque appui sur Entrée en mode normal basculait le mode "suppression sans mémoire".
+-- Déplacé sur <leader>c pour ne plus détourner Entrée.
+-- => soit <leader>c pour basculer, soit la commande :lua ToggleNoClipboard()
+vim.api.nvim_set_keymap("n", "<leader>c", ":lua ToggleNoClipboard()<CR>", opts)
 
 -- redéfinir d et x pour utiliser registre noir si toggle actif
 vim.keymap.set({ "n", "x" }, "d", function()

@@ -2,6 +2,11 @@ require "nvchad.options"
 
 -- add yours here!
 
+-- FIX copier/coller : connecte y (yank), d (delete) et p (paste) au presse-papiers
+-- système (X11 via xclip/xsel) au lieu des registres internes de Neovim.
+-- Sans ça, "copier/coller" entre Neovim et les autres applications ne marche pas.
+vim.opt.clipboard = "unnamedplus"
+
 -- local o = vim.o
 -- o.cursorlineopt ='both' -- to enable cursorline!
 
