@@ -25,71 +25,33 @@
 -- Garde les couleurs produites par Treesitter et reprend la couleur du linter
 -- lorsqu'un diagnostic se trouve dans le pli. Sans ce handler, ufo utilise
 -- `Folded`/`Comment` pour toute la ligne, ce qui la rend uniformément grise.
-local function fold_virt_text_handler(virtual_text, start_lnum, end_lnum, width, truncate, ctx)
-  local bufnr = (ctx and ctx.bufnr) or vim.api.nvim_get_current_buf()
-  local diagnostic_hl
-  local diagnostics = vim.diagnostic.get(bufnr, {
-    lnum = start_lnum - 1,
-    end_lnum = end_lnum - 1,
-  })
-
-  for _, diagnostic in ipairs(diagnostics) do
-    if diagnostic.severity == vim.diagnostic.severity.ERROR then
-      diagnostic_hl = "DiagnosticLineError"
-      break
-    elseif diagnostic.severity == vim.diagnostic.severity.WARN then
-      diagnostic_hl = diagnostic_hl or "DiagnosticLineWarn"
-    end
-  end
-
+local function fold_virt_text_handler(virtual_text, start_lnum, end_lnum, width, truncate)
   local suffix = (" 󰁅 %d lignes "):format(end_lnum - start_lnum + 1)
   local suffix_width = vim.fn.strdisplaywidth(suffix)
   local target_width = math.max(width - suffix_width, 0)
   local result = {}
   local current_width = 0
-  local line = vim.api.nvim_buf_get_lines(bufnr, start_lnum - 1, start_lnum, false)[1] or ""
 
-  -- `virtual_text` reçoit souvent le groupe Folded pour toute la ligne. On
-  -- relit donc la première ligne du pli et demande à Treesitter la capture
-  -- de chaque caractère afin de conserver les couleurs syntaxiques.
-  local byte_col = 0
-  while byte_col < #line and current_width < target_width do
-    local char = vim.fn.strpart(line, byte_col, 1)
-    local char_width = vim.fn.strdisplaywidth(char)
-    if current_width + char_width > target_width then
+  -- Utilise les groupes fournis par ufo (Treesitter quand disponibles) sans
+  -- appeler d'API optionnelle : cela évite de casser le rendu selon la version
+  -- de Neovim/Treesitter installée.
+  for _, chunk in ipairs(virtual_text) do
+    local text, hl = chunk[1], chunk[2] or "Normal"
+    local remaining = target_width - current_width
+    if remaining <= 0 then break end
+    local text_width = vim.fn.strdisplaywidth(text)
+    if text_width <= remaining then
+      result[#result + 1] = { text, hl }
+      current_width = current_width + text_width
+    else
+      result[#result + 1] = { truncate(text, remaining), hl }
+      current_width = target_width
       break
     end
-
-    local hl = diagnostic_hl or "Normal"
-    local captures
-    if not diagnostic_hl and vim.treesitter.get_captures_at_pos then
-      local ok, result = pcall(
-        vim.treesitter.get_captures_at_pos,
-        bufnr,
-        start_lnum - 1,
-        byte_col
-      )
-      if ok then
-        captures = result
-      end
-    end
-    if not diagnostic_hl and captures and #captures > 0 then
-      local capture = captures[#captures][1]
-      hl = capture:sub(1, 1) == "@" and capture or "@" .. capture
-    end
-
-    local last = result[#result]
-    if last and last[2] == hl then
-      last[1] = last[1] .. char
-    else
-      result[#result + 1] = { char, hl }
-    end
-    current_width = current_width + char_width
-    byte_col = byte_col + #char
   end
 
-  result[#result + 1] = { string.rep(" ", math.max(target_width - current_width, 0)), diagnostic_hl or "UfoFoldedEllipsis" }
-  result[#result + 1] = { suffix, diagnostic_hl or "UfoFoldedEllipsis" }
+  result[#result + 1] = { string.rep(" ", math.max(target_width - current_width, 0)), "Normal" }
+  result[#result + 1] = { suffix, "UfoFoldedEllipsis" }
   return result
 end
 
