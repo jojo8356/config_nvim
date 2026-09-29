@@ -29,6 +29,11 @@ M.base46 = {
     -- sinon le fond de la ligne de pli se coupe au milieu.
     UfoFoldedEllipsis = { fg = "grey_fg", bg = "black2" },
 
+    -- ufo transmet parfois `Folded` comme groupe pour le texte du code plié.
+    -- Le thème le rend gris par défaut ; on lui donne le même premier plan que
+    -- le code normal (les diagnostics restent prioritaires dans le handler ufo).
+    Folded = { fg = "white", bg = "black2" },
+
     -- Fond des lignes portant un diagnostic : utilisé par vim.diagnostic.config()
     -- dans lua/options.lua (signs.linehl). Avant, c'était 2 nvim_set_hl() en dur ici,
     -- du coup virés par base46 au premier changement de thème.
