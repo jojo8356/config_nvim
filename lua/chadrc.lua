@@ -32,7 +32,8 @@ M.base46 = {
     -- ufo transmet parfois `Folded` comme groupe pour le texte du code plié.
     -- Le thème le rend gris par défaut ; on lui donne le même premier plan que
     -- le code normal (les diagnostics restent prioritaires dans le handler ufo).
-    Folded = { fg = "white", bg = "black2" },
+    -- Laisse passer les couleurs Treesitter des chunks virtuels de nvim-ufo.
+    Folded = { bg = "NONE" },
 
     -- Fond des lignes portant un diagnostic : utilisé par vim.diagnostic.config()
     -- dans lua/options.lua (signs.linehl). Avant, c'était 2 nvim_set_hl() en dur ici,

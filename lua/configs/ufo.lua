@@ -36,10 +36,8 @@ local function fold_virt_text_handler(virtual_text, start_lnum, end_lnum, width,
   -- appeler d'API optionnelle : cela évite de casser le rendu selon la version
   -- de Neovim/Treesitter installée.
   for _, chunk in ipairs(virtual_text) do
-    -- Le groupe Folded de certains thèmes est gris et écrase les couleurs
-    -- reçues par ufo. Pour que le résumé ait le même contraste que le code,
-    -- force le texte du pli à utiliser Normal (le suffixe reste séparé).
-    local text, hl = chunk[1], "Normal"
+    -- Conserve le groupe Treesitter fourni par ufo (@keyword, @function...).
+    local text, hl = chunk[1], chunk[2] or "Normal"
     local remaining = target_width - current_width
     if remaining <= 0 then break end
     local text_width = vim.fn.strdisplaywidth(text)
