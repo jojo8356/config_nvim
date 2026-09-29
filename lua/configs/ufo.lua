@@ -22,9 +22,45 @@
 --   4. aucune couleur en dur (#..) ici : les groupes sont déclarés dans `base46.hl_add`
 --      (lua/chadrc.lua), le seul endroit qui survit à un changement de thème / reload base46.
 
+-- Garde les couleurs produites par Treesitter et reprend la couleur du linter
+-- lorsqu'un diagnostic se trouve dans le pli. Sans ce handler, ufo utilise
+-- `Folded`/`Comment` pour toute la ligne, ce qui la rend uniformément grise.
+local function fold_virt_text_handler(virtual_text, start_lnum, end_lnum, width, truncate)
+  local suffix = (" 󰁅 %d lignes "):format(end_lnum - start_lnum + 1)
+  local suffix_width = vim.fn.strdisplaywidth(suffix)
+  local target_width = math.max(width - suffix_width, 0)
+  local result = {}
+  local current_width = 0
+
+  -- Utilise les groupes fournis par ufo (Treesitter quand disponibles) sans
+  -- appeler d'API optionnelle : cela évite de casser le rendu selon la version
+  -- de Neovim/Treesitter installée.
+  for _, chunk in ipairs(virtual_text) do
+    -- Conserve le groupe Treesitter fourni par ufo (@keyword, @function...).
+    local text, hl = chunk[1], chunk[2] or "Normal"
+    local remaining = target_width - current_width
+    if remaining <= 0 then break end
+    local text_width = vim.fn.strdisplaywidth(text)
+    if text_width <= remaining then
+      result[#result + 1] = { text, hl }
+      current_width = current_width + text_width
+    else
+      result[#result + 1] = { truncate(text, remaining), hl }
+      current_width = target_width
+      break
+    end
+  end
+
+  result[#result + 1] = { string.rep(" ", math.max(target_width - current_width, 0)), "Normal" }
+  result[#result + 1] = { suffix, "UfoFoldedEllipsis" }
+  return result
+end
+
 return {
-  -- indispensable pour que ce soit NOTRE handler qui dessine la ligne de pli
-  override_foldtext = true,
+  -- Laisse Neovim afficher la première ligne avec ses couleurs Treesitter.
+  -- Le handler ufo ne doit pas remplacer foldtext par un texte blanc uniforme.
+  override_foldtext = false,
+  fold_virt_text_handler = fold_virt_text_handler,
 
   -- 'treesitter' lit queries/<ft>/folds.scm (@fold), 'indent' sert de filet
   provider_selector = function()
