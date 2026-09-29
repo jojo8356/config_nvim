@@ -57,8 +57,9 @@ local function fold_virt_text_handler(virtual_text, start_lnum, end_lnum, width,
 end
 
 return {
-  -- indispensable pour que ce soit NOTRE handler qui dessine la ligne de pli
-  override_foldtext = true,
+  -- Laisse Neovim afficher la première ligne avec ses couleurs Treesitter.
+  -- Le handler ufo ne doit pas remplacer foldtext par un texte blanc uniforme.
+  override_foldtext = false,
   fold_virt_text_handler = fold_virt_text_handler,
 
   -- 'treesitter' lit queries/<ft>/folds.scm (@fold), 'indent' sert de filet

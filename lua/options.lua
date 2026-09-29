@@ -23,6 +23,8 @@ vim.o.foldcolumn = "0"
 vim.o.foldenable = true
 vim.o.foldlevel = 99
 vim.o.foldlevelstart = 99
+-- Affiche la première ligne du pli avec ses groupes Treesitter.
+vim.o.foldtext = ""
 
 -- Keep Perl disabled.
 vim.g.loaded_perl_provider = 0
