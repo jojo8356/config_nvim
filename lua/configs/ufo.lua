@@ -26,8 +26,9 @@
 -- lorsqu'un diagnostic se trouve dans le pli. Sans ce handler, ufo utilise
 -- `Folded`/`Comment` pour toute la ligne, ce qui la rend uniformément grise.
 local function fold_virt_text_handler(virtual_text, start_lnum, end_lnum, width, truncate, ctx)
+  local bufnr = (ctx and ctx.bufnr) or vim.api.nvim_get_current_buf()
   local diagnostic_hl
-  local diagnostics = vim.diagnostic.get(ctx.bufnr, {
+  local diagnostics = vim.diagnostic.get(bufnr, {
     lnum = start_lnum - 1,
     end_lnum = end_lnum - 1,
   })
@@ -46,7 +47,7 @@ local function fold_virt_text_handler(virtual_text, start_lnum, end_lnum, width,
   local target_width = math.max(width - suffix_width, 0)
   local result = {}
   local current_width = 0
-  local line = vim.api.nvim_buf_get_lines(ctx.bufnr, start_lnum - 1, start_lnum, false)[1] or ""
+  local line = vim.api.nvim_buf_get_lines(bufnr, start_lnum - 1, start_lnum, false)[1] or ""
 
   -- `virtual_text` reçoit souvent le groupe Folded pour toute la ligne. On
   -- relit donc la première ligne du pli et demande à Treesitter la capture
@@ -64,7 +65,7 @@ local function fold_virt_text_handler(virtual_text, start_lnum, end_lnum, width,
     if not diagnostic_hl and vim.treesitter.get_captures_at_pos then
       local ok, result = pcall(
         vim.treesitter.get_captures_at_pos,
-        ctx.bufnr,
+        bufnr,
         start_lnum - 1,
         byte_col
       )
