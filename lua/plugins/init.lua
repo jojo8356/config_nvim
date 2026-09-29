@@ -67,16 +67,6 @@ return {
       "kevinhwang91/promise-async",
     },
 
-    init = function()
-      -- Pas de colonne des plis : avec foldcolumn = "1", ufo affiche à gauche
-      -- les niveaux de plis (2, 3, 7...) et des "-" pour les plis fermés, colorés
-      -- en rouge par base46 (FoldColumn = base0F). On la désactive.
-      vim.opt.foldcolumn = "0"
-      vim.opt.foldlevel = 99
-      vim.opt.foldlevelstart = 99
-      vim.opt.foldenable = true
-    end,
-
     -- toute la logique de rendu est dans lua/configs/ufo.lua
     opts = require "configs.ufo",
 

@@ -14,11 +14,12 @@ vim.opt.clipboard = "unnamedplus"
 vim.g.loaded_node_provider = nil
 vim.g.loaded_python3_provider = nil
 vim.g.loaded_ruby_provider = nil
+vim.o.foldcolumn = "0"
 
 -- Keep Perl disabled.
 vim.g.loaded_perl_provider = 0
 
-local npm_root = vim.fn.trim(vim.fn.system("npm root -g"))
+local npm_root = vim.fn.trim(vim.fn.system "npm root -g")
 if npm_root ~= "" then
   vim.g.node_host_prog = vim.fn.fnamemodify(npm_root, ":h:h") .. "/bin/neovim-node-host"
 end

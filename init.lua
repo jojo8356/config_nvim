@@ -43,3 +43,5 @@ end)
 require("cmp").config.formatting = {
   format = require("tailwindcss-colorizer-cmp").formatter,
 }
+
+vim.opt.clipboard = "unnamedplus"
