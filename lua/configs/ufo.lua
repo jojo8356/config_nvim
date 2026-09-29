@@ -60,7 +60,18 @@ local function fold_virt_text_handler(virtual_text, start_lnum, end_lnum, width,
     end
 
     local hl = diagnostic_hl or "Normal"
-    local captures = vim.treesitter.get_captures_at_pos(ctx.bufnr, start_lnum - 1, byte_col)
+    local captures
+    if not diagnostic_hl and vim.treesitter.get_captures_at_pos then
+      local ok, result = pcall(
+        vim.treesitter.get_captures_at_pos,
+        ctx.bufnr,
+        start_lnum - 1,
+        byte_col
+      )
+      if ok then
+        captures = result
+      end
+    end
     if not diagnostic_hl and captures and #captures > 0 then
       local capture = captures[#captures][1]
       hl = capture:sub(1, 1) == "@" and capture or "@" .. capture
