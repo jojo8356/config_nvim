@@ -22,9 +22,57 @@
 --   4. aucune couleur en dur (#..) ici : les groupes sont déclarés dans `base46.hl_add`
 --      (lua/chadrc.lua), le seul endroit qui survit à un changement de thème / reload base46.
 
+-- Garde les couleurs produites par Treesitter et reprend la couleur du linter
+-- lorsqu'un diagnostic se trouve dans le pli. Sans ce handler, ufo utilise
+-- `Folded`/`Comment` pour toute la ligne, ce qui la rend uniformément grise.
+local function fold_virt_text_handler(virtual_text, start_lnum, end_lnum, width, truncate, ctx)
+  local diagnostic_hl
+  local diagnostics = vim.diagnostic.get(ctx.bufnr, {
+    lnum = start_lnum - 1,
+    end_lnum = end_lnum - 1,
+  })
+
+  for _, diagnostic in ipairs(diagnostics) do
+    if diagnostic.severity == vim.diagnostic.severity.ERROR then
+      diagnostic_hl = "DiagnosticLineError"
+      break
+    elseif diagnostic.severity == vim.diagnostic.severity.WARN then
+      diagnostic_hl = diagnostic_hl or "DiagnosticLineWarn"
+    end
+  end
+
+  local suffix = (" 󰁅 %d lignes "):format(end_lnum - start_lnum + 1)
+  local suffix_width = vim.fn.strdisplaywidth(suffix)
+  local target_width = math.max(width - suffix_width, 0)
+  local result = {}
+  local current_width = 0
+
+  for _, chunk in ipairs(virtual_text) do
+    local text = chunk[1]
+    local hl = diagnostic_hl or chunk[2]
+    local text_width = vim.fn.strdisplaywidth(text)
+
+    if current_width + text_width <= target_width then
+      result[#result + 1] = { text, hl }
+      current_width = current_width + text_width
+    else
+      local remaining = target_width - current_width
+      if remaining > 0 then
+        result[#result + 1] = { truncate(text, remaining), hl }
+      end
+      break
+    end
+  end
+
+  result[#result + 1] = { string.rep(" ", math.max(target_width - current_width, 0)), diagnostic_hl or "UfoFoldedEllipsis" }
+  result[#result + 1] = { suffix, diagnostic_hl or "UfoFoldedEllipsis" }
+  return result
+end
+
 return {
   -- indispensable pour que ce soit NOTRE handler qui dessine la ligne de pli
   override_foldtext = true,
+  fold_virt_text_handler = fold_virt_text_handler,
 
   -- 'treesitter' lit queries/<ft>/folds.scm (@fold), 'indent' sert de filet
   provider_selector = function()
