@@ -16,15 +16,13 @@ vim.g.loaded_python3_provider = nil
 vim.g.loaded_ruby_provider = nil
 vim.o.foldcolumn = "0"
 
--- nvim-ufo (lua/configs/ufo.lua) calcule les plis avec foldmethod=manual en interne.
--- Sans ça, 'foldlevel' garde sa valeur par défaut (0), ce qui replie TOUT
--- automatiquement à l'ouverture de chaque fichier -> d'où l'effet "moche".
--- Cf. doc nvim-ufo (section "Minimal configuration") : il faut une grande valeur.
+-- nvim-ufo (lua/plugins/init.lua) calcule les plis avec foldmethod=manual en interne.
+-- Config minimale de la doc nvim-ufo (README, "Minimal configuration") :
+-- sans ces grandes valeurs, 'foldlevel' replie TOUT à l'ouverture de chaque fichier.
+-- Le reste (foldtext, rendu de la ligne de pli, providers) : réglages par défaut de ufo.
 vim.o.foldenable = true
 vim.o.foldlevel = 99
 vim.o.foldlevelstart = 99
--- Affiche la première ligne du pli avec ses groupes Treesitter.
-vim.o.foldtext = ""
 
 -- Keep Perl disabled.
 vim.g.loaded_perl_provider = 0

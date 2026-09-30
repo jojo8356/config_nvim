@@ -23,18 +23,6 @@ M.base46 = {
   --   hl_add      -> groupes que NvChad/base46 ne définit PAS (nouveau nom)
   --   hl_override -> groupes déjà définis par base46 (Comment, Folded, @keyword...)
   hl_add = {
-    -- nvim-ufo (lua/configs/ufo.lua) : tirets + compteur de la ligne de pli.
-    -- ufo fait `hi default link UfoFoldedEllipsis Comment` ; notre définition gagne
-    -- car elle n'est pas "default". bg = "black2" = le bg que base46 donne à Folded,
-    -- sinon le fond de la ligne de pli se coupe au milieu.
-    UfoFoldedEllipsis = { fg = "grey_fg", bg = "black2" },
-
-    -- ufo transmet parfois `Folded` comme groupe pour le texte du code plié.
-    -- Le thème le rend gris par défaut ; on lui donne le même premier plan que
-    -- le code normal (les diagnostics restent prioritaires dans le handler ufo).
-    -- Laisse passer les couleurs Treesitter des chunks virtuels de nvim-ufo.
-    Folded = { bg = "NONE" },
-
     -- Fond des lignes portant un diagnostic : utilisé par vim.diagnostic.config()
     -- dans lua/options.lua (signs.linehl). Avant, c'était 2 nvim_set_hl() en dur ici,
     -- du coup virés par base46 au premier changement de thème.
