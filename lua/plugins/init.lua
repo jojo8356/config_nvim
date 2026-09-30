@@ -61,14 +61,21 @@ return {
 
     main = "ufo",
     lazy = false,
-    priority = 1000,
 
     dependencies = {
       "kevinhwang91/promise-async",
     },
 
-    -- Réglages par défaut de nvim-ufo : pas d'opts custom (plus de handler
-    -- de couleurs ni de provider_selector -> 'lsp' + 'indent' par défaut).
+    -- FIX <leader>z : sans `opts` NI `config`, lazy.nvim n'appelle jamais
+    -- `require('ufo').setup()` (lazy/core/loader.lua : `if plugin.config or
+    -- plugin.opts then M.config(plugin)`). ufo restait donc totalement inactif :
+    -- aucun pli n'était créé et `<leader>z` (`za`) renvoyait "E490: No fold found".
+    -- `opts = {}` suffit à ce que lazy appelle setup() avec les réglages par
+    -- défaut de ufo (providers 'lsp' + fallback 'indent', foldtext par défaut).
+    -- Les options minimales de la doc ufo (foldlevel/foldlevelstart/foldenable)
+    -- sont dans lua/options.lua.
+    opts = {},
+
     keys = {
       {
         "zR",
