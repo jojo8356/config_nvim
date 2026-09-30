@@ -12,6 +12,16 @@ if has_cmp then
   capabilities = cmp_nvim_lsp.default_capabilities(capabilities)
 end
 
+-- nvim-ufo : la config minimale de sa doc demande d'annoncer la capacité
+-- `foldingRange` aux serveurs LSP. Sans ça, le provider 'lsp' de ufo ne
+-- renvoie aucune range de pli et il retombe sur le provider 'indent'
+-- (approximatif). (lua/plugins/init.lua -> nvim-ufo)
+capabilities.textDocument = capabilities.textDocument or {}
+capabilities.textDocument.foldingRange = {
+  dynamicRegistration = false,
+  lineFoldingOnly = true,
+}
+
 local function mason_executable(name)
   return mason_bin .. "/" .. name
 end
