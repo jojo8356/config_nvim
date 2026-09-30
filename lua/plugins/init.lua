@@ -67,9 +67,8 @@ return {
       "kevinhwang91/promise-async",
     },
 
-    -- toute la logique de rendu est dans lua/configs/ufo.lua
-    opts = require "configs.ufo",
-
+    -- Réglages par défaut de nvim-ufo : pas d'opts custom (plus de handler
+    -- de couleurs ni de provider_selector -> 'lsp' + 'indent' par défaut).
     keys = {
       {
         "zR",
